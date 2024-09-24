@@ -1,6 +1,8 @@
+import java.awt.Color;
+import java.util.HashMap;
 import java.util.List;
 
-public class Bad_UnoPlayer implements UnoPlayer {
+public class Alex_UnoPlayer implements UnoPlayer {
 	/**
 	 * play - This method is called when it's your turn and you need to
 	 * choose what card to play.
@@ -34,8 +36,17 @@ public class Bad_UnoPlayer implements UnoPlayer {
 	 */
 	public int play(List<Card> hand, Card upCard, Color calledColor, GameState state)
 	{
-		// THIS IS WHERE YOUR AMAZING CODE GOES
+		Color upColor = getUpColor(upCard, calledColor);
+		List<Card> cards = findAllowedCards(hand, upCard, calledColor);
 		return -1;
+	}
+
+	private UnoPlayer.Color getUpColor(Card upCard, UnoPlayer.Color calledColor) {
+		if (calledColor == Color.NONE) {
+			return upCard.getColor();
+		} else {
+			return calledColor;
+		}
 	}
 
 	/**
@@ -49,6 +60,17 @@ public class Bad_UnoPlayer implements UnoPlayer {
 	public Color callColor(List<Card> hand)
 	{
 		// THIS IS WHERE YOUR AMAZING CODE GOES
+		return null;
+	}
+
+	private static List<Card> findAllowedCards(List<Card> hand, Card upCard, Color calledColor) {
+//		List<Card> allowedCards = new List<Card>(); 
+		for (int i = 0; i < hand.size(); i++) {
+			if (hand.get(i).getRank() == Rank.NUMBER && hand.get(i).getColor() == upCard.getColor()) {
+				//same number
+//				allowedCards.add(i, hand.get(i));
+			}
+		}
 		return null;
 	}
 }

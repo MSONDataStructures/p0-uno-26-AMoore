@@ -1,2 +1,3 @@
 rootProject.name = 'DSp0Uno'
+include "src.java.main"
 

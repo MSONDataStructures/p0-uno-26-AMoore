@@ -16,255 +16,255 @@ import java.util.ArrayList;
  */
 public class Game
 {
-    /**
-     * The number of cards each player will be dealt at start of game.
-     */
-    static final int INIT_HAND_SIZE = 7;
+	/**
+	 * The number of cards each player will be dealt at start of game.
+	 */
+	static final int INIT_HAND_SIZE = 7;
 
-    public enum Direction { FORWARDS, BACKWARDS };
-    
-    static final boolean PRINT_VERBOSE = true;
+	public enum Direction { FORWARDS, BACKWARDS };
 
-    /**
-     * An object representing the state of the game at any point in time.
-     * Note that much of the "state" is represented in the Game object
-     * itself, and that this object provides a double-dispatch vehicle
-     * through which select methods can access that state.
-     */
-    private GameState state;
+	static final boolean PRINT_VERBOSE = true;
 
-    /* package-visibility variables to simplify access between Game and
-     * GameState classes */
-    Deck deck;
-    Hand h[];
-    Card upCard;
-    Direction direction;
-    int currPlayer;
-    UnoPlayer.Color calledColor;
-    Scoreboard scoreboard;
-    UnoPlayer.Color mostRecentColorCalled[];
+	/**
+	 * An object representing the state of the game at any point in time.
+	 * Note that much of the "state" is represented in the Game object
+	 * itself, and that this object provides a double-dispatch vehicle
+	 * through which select methods can access that state.
+	 */
+	private GameState state;
 
-    /**
-     * Main constructor to instantiate a Game of Uno. Provided must be two
-     * objects indicating the player roster: a Scoreboard, and a class
-     * list. This constructor will deal hands to all players, select a
-     * non-action up card, and reset all game settings so that play() can
-     * be safely called.
-     * @param scoreboard A fully-populated Scoreboard object that contains
-     * the names of the contestants, in order.
-     * @param playerClassList[] An array of Strings, each of which is a
-     * fully-qualified package/class name of a class that implements the
-     * UnoPlayer interface.
-     */
-    public Game(Scoreboard scoreboard, ArrayList<String> playerClassList)
-    {
-        this.scoreboard = scoreboard;
-        deck = new Deck();
-        h = new Hand[scoreboard.getNumPlayers()];
-        mostRecentColorCalled =
-            new UnoPlayer.Color[scoreboard.getNumPlayers()];
-        try
-        {
-            for (int i = 0; i < scoreboard.getNumPlayers(); i++)
-            {
-                h[i] = new Hand(playerClassList.get(i),
-                    scoreboard.getPlayerList()[i]);
-                for (int j = 0; j < INIT_HAND_SIZE; j++)
-                {
-                    h[i].addCard(deck.draw());
-                }
-            }
-            upCard = deck.draw();
-            while (upCard.followedByCall())
-            {
-                deck.discard(upCard);
-                upCard = deck.draw();
-            }
-        }
-        catch (Exception e)
-        {
-            System.out.println("Can't deal initial hands!");
-            System.exit(1);
-        }
-        direction = Direction.FORWARDS;
-        currPlayer =
-            new java.util.Random().nextInt(scoreboard.getNumPlayers());
-        calledColor = UnoPlayer.Color.NONE;
-    }
+	/* package-visibility variables to simplify access between Game and
+	 * GameState classes */
+	Deck deck;
+	Hand h[];
+	Card upCard;
+	Direction direction;
+	int currPlayer;
+	UnoPlayer.Color calledColor;
+	Scoreboard scoreboard;
+	UnoPlayer.Color mostRecentColorCalled[];
 
-    private void printState()
-    {
-        for (int i = 0; i < scoreboard.getNumPlayers(); i++)
-        {
-            System.out.println("Hand #" + i + ": " + h[i]);
-        }
-    }
+	/**
+	 * Main constructor to instantiate a Game of Uno. Provided must be two
+	 * objects indicating the player roster: a Scoreboard, and a class
+	 * list. This constructor will deal hands to all players, select a
+	 * non-action up card, and reset all game settings so that play() can
+	 * be safely called.
+	 * @param scoreboard A fully-populated Scoreboard object that contains
+	 * the names of the contestants, in order.
+	 * @param playerClassList[] An array of Strings, each of which is a
+	 * fully-qualified package/class name of a class that implements the
+	 * UnoPlayer interface.
+	 */
+	public Game(Scoreboard scoreboard, ArrayList<String> playerClassList)
+	{
+		this.scoreboard = scoreboard;
+		deck = new Deck();
+		h = new Hand[scoreboard.getNumPlayers()];
+		mostRecentColorCalled =
+			new UnoPlayer.Color[scoreboard.getNumPlayers()];
+		try
+		{
+			for (int i = 0; i < scoreboard.getNumPlayers(); i++)
+			{
+				h[i] = new Hand(playerClassList.get(i),
+						scoreboard.getPlayerList()[i]);
+				for (int j = 0; j < INIT_HAND_SIZE; j++)
+				{
+					h[i].addCard(deck.draw());
+				}
+			}
+			upCard = deck.draw();
+			while (upCard.followedByCall())
+			{
+				deck.discard(upCard);
+				upCard = deck.draw();
+			}
+		}
+		catch (Exception e)
+		{
+			System.out.println("Can't deal initial hands!");
+			System.exit(1);
+		}
+		direction = Direction.FORWARDS;
+		currPlayer =
+			new java.util.Random().nextInt(scoreboard.getNumPlayers());
+		calledColor = UnoPlayer.Color.NONE;
+	}
 
-    /**
-     * Return the number of the <i>next</i> player to play, provided the
-     * current player doesn't jack that up by playing an action card.
-     * @return An integer from 0 to scoreboard.getNumPlayers()-1.
-     */
-    public int getNextPlayer()
-    {
-        if (direction == Direction.FORWARDS)
-        {
-            return (currPlayer + 1) % scoreboard.getNumPlayers();
-        }
-        else
-        {
-            if (currPlayer == 0)
-            {
-                return scoreboard.getNumPlayers() - 1;
-            }
-            else
-            {
-                return currPlayer - 1;
-            }
-        }
-    }
+	private void printState()
+	{
+		for (int i = 0; i < scoreboard.getNumPlayers(); i++)
+		{
+			System.out.println("Hand #" + i + ": " + h[i]);
+		}
+	}
 
-    /**
-     * Go ahead and advance to the next player.
-     */
-    void advanceToNextPlayer()
-    {
-        currPlayer = getNextPlayer();
-    }
+	/**
+	 * Return the number of the <i>next</i> player to play, provided the
+	 * current player doesn't jack that up by playing an action card.
+	 * @return An integer from 0 to scoreboard.getNumPlayers()-1.
+	 */
+	public int getNextPlayer()
+	{
+		if (direction == Direction.FORWARDS)
+		{
+			return (currPlayer + 1) % scoreboard.getNumPlayers();
+		}
+		else
+		{
+			if (currPlayer == 0)
+			{
+				return scoreboard.getNumPlayers() - 1;
+			}
+			else
+			{
+				return currPlayer - 1;
+			}
+		}
+	}
 
-    /**
-     * Change the direction of the game from clockwise to counterclockwise
-     * (or vice versa.)
-     */
-    void reverseDirection()
-    {
-        if (direction == Direction.FORWARDS)
-        {
-            direction = Direction.BACKWARDS;
-        }
-        else
-        {
-            direction = Direction.FORWARDS;
-        }
-    }
+	/**
+	 * Go ahead and advance to the next player.
+	 */
+	void advanceToNextPlayer()
+	{
+		currPlayer = getNextPlayer();
+	}
 
-    /**
-     * Play an entire Game of Uno from start to finish. Hands should have
-     * already been dealt before this method is called, and a valid up card
-     * turned up. When the method is completed, the Game's scoreboard object
-     * will have been updated with new scoring favoring the winner.
-     */
-    public void play()
-    {
-        println("Initial upcard is " + upCard + ".");
-        try
-        {
-            while (true)
-            {
-                //print("Hand #" + currPlayer + " (" + h[currPlayer] + ")");
-                print(h[currPlayer].getPlayerName() +
-                    " (" + h[currPlayer] + ")");
-                Card playedCard = h[currPlayer].play(this);
-                if (playedCard == null) {
-                    Card drawnCard;
-                    try
-                    {
-                        drawnCard = deck.draw();
-                    }
-                    catch (Exception e)
-                    {
-                        print("...deck exhausted, remixing...");
-                        deck.remix();
-                        drawnCard = deck.draw();
-                    }
-                    h[currPlayer].addCard(drawnCard);
-                    print(" has to draw (" + drawnCard + ").");
-                    playedCard = h[currPlayer].play(this);
-                }
-                if (playedCard != null)
-                {
-                    print(" plays " + playedCard + " on " + upCard + ".");
-                    deck.discard(upCard);
-                    upCard = playedCard;
-                    if (upCard.followedByCall())
-                    {
-                        calledColor = h[currPlayer].callColor(this);
-                        mostRecentColorCalled[currPlayer] = calledColor;
-                        print(" (and calls " + calledColor +
-                            ").");
-                    }
-                    else
-                    {
-                        calledColor = UnoPlayer.Color.NONE;
-                    }
-                }
-                if (h[currPlayer].isEmpty()) {
-                    int roundPoints = 0;
-                    for (int j = 0; j < scoreboard.getNumPlayers(); j++)
-                    {
-                        roundPoints += h[j].countCards();
-                    }
-                    println("\n" + h[currPlayer].getPlayerName() +
-                        " wins! (and collects " + roundPoints + " points.)");
-                    scoreboard.addToScore(currPlayer,roundPoints);
-                    println("---------------\n" + scoreboard);
-                    return;
-                }
-                if (h[currPlayer].size() == 1)
-                {
-                    print(" UNO!");
-                }
-                println("");
-                if (playedCard != null)
-                {
-                    playedCard.performCardEffect(this);
-                }
-                else
-                {
-                    advanceToNextPlayer();
-                }
-            }
-        }
-        catch (EmptyDeckException e)
-        {
-            System.out.println("Deck exhausted! This game is a draw.");
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-    }
+	/**
+	 * Change the direction of the game from clockwise to counterclockwise
+	 * (or vice versa.)
+	 */
+	void reverseDirection()
+	{
+		if (direction == Direction.FORWARDS)
+		{
+			direction = Direction.BACKWARDS;
+		}
+		else
+		{
+			direction = Direction.FORWARDS;
+		}
+	}
 
-    void print(String s)
-    {
-        if (PRINT_VERBOSE)
-        {
-            System.out.print(s);
-        }
-    }
+	/**
+	 * Play an entire Game of Uno from start to finish. Hands should have
+	 * already been dealt before this method is called, and a valid up card
+	 * turned up. When the method is completed, the Game's scoreboard object
+	 * will have been updated with new scoring favoring the winner.
+	 */
+	public void play()
+	{
+		println("Initial upcard is " + upCard + ".");
+		try
+		{
+			while (true)
+			{
+				//print("Hand #" + currPlayer + " (" + h[currPlayer] + ")");
+				print(h[currPlayer].getPlayerName() +
+						" (" + h[currPlayer] + ")");
+				Card playedCard = h[currPlayer].play(this);
+				if (playedCard == null) {
+					Card drawnCard;
+					try
+					{
+						drawnCard = deck.draw();
+					}
+					catch (Exception e)
+					{
+						print("...deck exhausted, remixing...");
+						deck.remix();
+						drawnCard = deck.draw();
+					}
+					h[currPlayer].addCard(drawnCard);
+					print(" has to draw (" + drawnCard + ").");
+					playedCard = h[currPlayer].play(this);
+				}
+				if (playedCard != null)
+				{
+					print(" plays " + playedCard + " on " + upCard + ".");
+					deck.discard(upCard);
+					upCard = playedCard;
+					if (upCard.followedByCall())
+					{
+						calledColor = h[currPlayer].callColor(this);
+						mostRecentColorCalled[currPlayer] = calledColor;
+						print(" (and calls " + calledColor +
+								").");
+					}
+					else
+					{
+						calledColor = UnoPlayer.Color.NONE;
+					}
+				}
+				if (h[currPlayer].isEmpty()) {
+					int roundPoints = 0;
+					for (int j = 0; j < scoreboard.getNumPlayers(); j++)
+					{
+						roundPoints += h[j].countCards();
+					}
+					println("\n" + h[currPlayer].getPlayerName() +
+							" wins! (and collects " + roundPoints + " points.)");
+					scoreboard.addToScore(currPlayer,roundPoints);
+					println("---------------\n" + scoreboard);
+					return;
+				}
+				if (h[currPlayer].size() == 1)
+				{
+					print(" UNO!");
+				}
+				println("");
+				if (playedCard != null)
+				{
+					playedCard.performCardEffect(this);
+				}
+				else
+				{
+					advanceToNextPlayer();
+				}
+			}
+		}
+		catch (EmptyDeckException e)
+		{
+			System.out.println("Deck exhausted! This game is a draw.");
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
 
-    void println(String s)
-    {
-        if (PRINT_VERBOSE)
-        {
-            System.out.println(s);
-        }
-    }
+	void print(String s)
+	{
+		if (PRINT_VERBOSE)
+		{
+			System.out.print(s);
+		}
+	}
 
-    /**
-     * Return the GameState object, through which the state of the game can
-     * be accessed and safely manipulated.
-     */
-    public GameState getGameState()
-    {
-        return new GameState(this);
-    }
+	void println(String s)
+	{
+		if (PRINT_VERBOSE)
+		{
+			System.out.println(s);
+		}
+	}
 
-    /**
-     * Return the Card that is currently the "up card" in the game.
-     */
-    public Card getUpCard()
-    {
-        return upCard;
-    }
+	/**
+	 * Return the GameState object, through which the state of the game can
+	 * be accessed and safely manipulated.
+	 */
+	public GameState getGameState()
+	{
+		return new GameState(this);
+	}
+
+	/**
+	 * Return the Card that is currently the "up card" in the game.
+	 */
+	public Card getUpCard()
+	{
+		return upCard;
+	}
 }
