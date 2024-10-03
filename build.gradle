@@ -23,5 +23,6 @@ test {
 }
 
 application {
-	mainClass = 'TestCaseProcessor'
+//	mainClass = 'TestCaseProcessor'
+	mainClass = 'UnoSimulation'
 }

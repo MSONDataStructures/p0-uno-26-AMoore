@@ -1,5 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class Alex_UnoPlayer implements UnoPlayer {
 	/** {{{
@@ -36,12 +38,49 @@ public class Alex_UnoPlayer implements UnoPlayer {
 	public int play(List<Card> hand, Card upCard, Color calledColor, GameState state)
 	{
 		Color upColor = getUpColor(upCard, calledColor);
-		List<Touple<Integer, Card>> cards = findAllowedCards(hand, upColor, upCard.getNumber(), upCard.getRank());
-		if (cards.size() > 0) {
-			return cards.get(0).index;
-		} else {
+		int[] allowed = allowedCards(hand, upCard, calledColor);
+
+		int highCard = hand.get(0).getNumber();
+		int highCardIndex = 0;
+		int wildCount = 0;
+		if (allowed.length <= 0) {
 			return -1;
 		}
+
+		for (int i : allowed) {
+			Card card = hand.get(i);
+			if (card.getRank() == Rank.WILD || card.getRank() == Rank.WILD_D4) {
+				wildCount++;
+			}
+		}
+		for (int i : allowed) {
+			Card card = hand.get(i);
+			if (card.getRank() == Rank.WILD || card.getRank() == Rank.WILD_D4) {
+				wildCount++;
+			}
+		}
+		for (int i : allowed) {
+			Card card = hand.get(i);
+			switch (card.getRank()) {
+				case WILD_D4:
+				case WILD:
+					if (wildCount > 1) {
+						return i;
+					}
+				case DRAW_TWO:
+				case REVERSE:
+				case SKIP:
+					return i;
+				case NUMBER:
+					if (card.getNumber() > highCard) {
+						highCard = card.getNumber();
+						highCardIndex = i;
+					}
+				default:
+					return i;
+			}
+		}
+		return highCardIndex;
 	}
 
 	/** {{{
@@ -53,8 +92,8 @@ public class Alex_UnoPlayer implements UnoPlayer {
 	 * return the value Color.NONE under any circumstances.
 	 * }}}
 	 */
-	public Color callColor(List<Card> hand)
-//{{{
+	public Color callColor(List<Card> hand) //literally just what color i have the most of
+											//{{{
 	{
 		int reds = 0, greens = 0, yellows = 0, blues = 0;
 		for (Card card : hand) {
@@ -86,7 +125,7 @@ public class Alex_UnoPlayer implements UnoPlayer {
 		}
 		return UnoPlayer.Color.RED;
 	}
-//}}}
+	//}}}
 
 	private UnoPlayer.Color getUpColor(Card upCard, UnoPlayer.Color calledColor) {
 		if (calledColor == Color.NONE) {
@@ -96,28 +135,50 @@ public class Alex_UnoPlayer implements UnoPlayer {
 		}
 	}
 
-	private List<Touple<Integer, Card>> findAllowedCards(List<Card> hand, Color color, int card, Rank rank) {
-		List<Touple<Integer, Card>> allowedCards = new ArrayList<Touple<Integer, Card>>();
-		for (int i = 0; i < hand.size(); i++) {
-			Card checkCard = hand.get(i);
-			if (checkCard.getRank() != Rank.NUMBER && checkCard.getRank() == rank || checkCard.getRank() == Rank.WILD || checkCard.getRank() == Rank.WILD_D4) {
-				allowedCards.add(this.new Touple<>(i, checkCard));
-			} else if (checkCard.getRank() == Rank.NUMBER && checkCard.getNumber() == card) {
-				allowedCards.add(this.new Touple<>(i, checkCard));
-			} else if (checkCard.getColor() == color) {
-				allowedCards.add(this.new Touple<>(i, checkCard));
-			}
-		}
-		return allowedCards;
+	private int[] allowedCards(List<Card> hand, Card topCard, Color calledColor) {
+		//took a long look at the docs for this one
+		return IntStream.range(0, hand.size())
+			.mapToObj((i) -> new Tuple<Integer, Card>(i, hand.get(i)))
+			.filter((t) -> cardIsValid(t.value, topCard, calledColor))
+			.mapToInt(t -> t.index)
+			.toArray();
 	}
 
-	// looking back, probably unnessaccary, but i really like touples, and I have been using rust a little too much maybe
-	public class Touple<I, V> {
+	private boolean cardIsValid(Card card, Card topCard, Color calledColor) {
+		if (getUpColor(topCard, calledColor) == card.getColor()) return true;
+
+		switch (card.getRank()) {
+			case WILD:
+			case WILD_D4:
+				return true;
+			case NUMBER:
+				return card.getNumber() == topCard.getNumber();
+			case DRAW_TWO:
+			case REVERSE:
+			case SKIP:
+				return card.getRank() == topCard.getRank();
+			default:
+				return false;
+		}
+	}
+
+	public class Tuple<I, V> {
 		public final I index;
 		public final V value;
-		public Touple(I index, V value) {
+		public Tuple(I index, V value) {
 			this.index = index;
 			this.value = value;
 		}
+	}
+}
+
+class OtherPlayer {
+	int score;
+	int redsPlayed;
+	int bluesPlayed;
+	int yellowsPlayed;
+	int greensPlayed;
+	public OtherPlayer() {
+
 	}
 }
