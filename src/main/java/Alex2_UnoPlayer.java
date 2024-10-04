@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class Alex1_UnoPlayer implements UnoPlayer {
+public class Alex2_UnoPlayer implements UnoPlayer {
 	/** {{{
 	 * play - This method is called when it's your turn and you need to
 	 * choose what card to play.
@@ -41,50 +41,31 @@ public class Alex1_UnoPlayer implements UnoPlayer {
 	public int play(List<Card> hand, Card upCard, Color calledColor, GameState state)
 	{
 		Color upColor = getUpColor(upCard, calledColor);
-		List<Throuple<Integer, Card, Double>> cards = findAllowedCards(hand, upColor, upCard.getNumber(), upCard.getRank());
+		List<Touple<Integer, Card>> cards = findAllowedCards(hand, upColor, upCard.getNumber(), upCard.getRank());
+		int highCard = hand.get(0).getNumber();
+		int highCardIndex = 0;
 		if (cards.size() > 0) {
-			cards.iterator().forEachRemaining((card) -> {card.weight = weigh(card, upColor, state);});
-			Throuple<Integer, Card, Double> highCard = cards.get(0);
-			for (int i = 0; i < cards.size(); i++) {
-				if (cards.get(i).weight > highCard.weight) {
-					highCard = cards.get(i);
+			for (Touple<Integer,Card> touple : cards) {
+				switch (touple.value.getRank()) {
+					case WILD_D4:
+					case WILD:
+						handleColor(state);
+						return touple.index;
+					case DRAW_TWO:
+					case REVERSE:
+					case SKIP:
+						return touple.index;
+					default:
+						if (touple.value.getNumber() > highCard) {
+							highCard = touple.value.getNumber();
+							highCardIndex = touple.index;
+						}
 				}
 			}
-			return highCard.index;
+			return highCardIndex;
 		} else {
 			return -1;
 		}
-	}
-	private Double weigh(Throuple<Integer, Card, Double> card, UnoPlayer.Color upColor, GameState state) {
-		double value = 0;
-		switch (card.value.getRank()) {
-			case WILD:
-			case WILD_D4:
-				value -= 20;
-			case DRAW_TWO:
-			case REVERSE:
-			case SKIP:
-				value += 20;
-			case NUMBER:
-				value += card.value.getNumber();
-		}
-		if (state.getNumCardsInHandsOfUpcomingPlayers()[0] <= 3) {
-			switch (card.value.getRank()) {
-				case WILD:
-					value += 20;
-				case WILD_D4:
-					value += 50;
-				case DRAW_TWO:
-				case REVERSE:
-				case SKIP:
-					value += 50;
-				case NUMBER:
-					value -= 100;
-			}
-		}
-		//add some pizzaz
-		value += (Math.random() - .5) * 1000;
-		return value;
 	}
 	public void handleColor(GameState state) {
 		redAllowed = true;
@@ -174,31 +155,28 @@ public class Alex1_UnoPlayer implements UnoPlayer {
 		}
 	}
 
-	private List<Throuple<Integer, Card, Double>> findAllowedCards(List<Card> hand, Color color, int card, Rank rank) {
-		List<Throuple<Integer, Card, Double>> allowedCards = new ArrayList<Throuple<Integer, Card, Double>>();
+	private List<Touple<Integer, Card>> findAllowedCards(List<Card> hand, Color color, int card, Rank rank) {
+		List<Touple<Integer, Card>> allowedCards = new ArrayList<Touple<Integer, Card>>();
 		for (int i = 0; i < hand.size(); i++) {
 			Card checkCard = hand.get(i);
-			double weight = 0;
 			if (checkCard.getRank() != Rank.NUMBER && checkCard.getRank() == rank || checkCard.getRank() == Rank.WILD || checkCard.getRank() == Rank.WILD_D4) {
-				allowedCards.add(this.new Throuple<>(i, checkCard, weight));
+				allowedCards.add(this.new Touple<>(i, checkCard));
 			} else if (checkCard.getRank() == Rank.NUMBER && checkCard.getNumber() == card) {
-				allowedCards.add(this.new Throuple<>(i, checkCard, weight));
+				allowedCards.add(this.new Touple<>(i, checkCard));
 			} else if (checkCard.getColor() == color) {
-				allowedCards.add(this.new Throuple<>(i, checkCard, weight));
+				allowedCards.add(this.new Touple<>(i, checkCard));
 			}
 		}
 		return allowedCards;
 	}
 
-	// looking back, probably unnessaccary, but i really like ~~touples~~ throuples, and I have been using rust a little too much maybe
-	public class Throuple<I, V, W> {
-		public I index;
-		public V value;
-		public W weight;
-		public Throuple(I index, V value, W weight) {
+	// looking back, probably unnessaccary, but i really like touples, and I have been using rust a little too much maybe
+	public class Touple<I, V> {
+		public final I index;
+		public final V value;
+		public Touple(I index, V value) {
 			this.index = index;
 			this.value = value;
-			this.weight = weight;
 		}
 	}
 	class OtherPlayer {
@@ -207,9 +185,6 @@ public class Alex1_UnoPlayer implements UnoPlayer {
 		int bluesPlayed;
 		int yellowsPlayed;
 		int greensPlayed;
-
-		public OtherPlayer(GameState state) {
-			state.getPlayedCards();
-		}
+		public OtherPlayer(GameState state) {}
 	}
 }
